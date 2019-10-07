@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Upload files
-\Upload
+upload/
 # Runtime data
 pids
 *.pid
