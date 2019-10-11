@@ -20,10 +20,8 @@ class DropBoxController {
         this.btnDelete = document.querySelector('#btn-delete');
 
         this.connectFirebase();
-
-        this.readFiles();
-
         this.initEvents();
+        this.openFolder();
     }
 
     connectFirebase() {
@@ -181,9 +179,10 @@ class DropBoxController {
 
     }
 
-    getFirebaseRef() {
+    getFirebaseRef(path) {
+        if(!path) path = this.currentFolder.join('/');
 
-        return firebase.database().ref('files');
+        return firebase.database().ref(path);
     }
 
     ajax(url, method = 'GET', formData = new FormData(), onprogress = function () { }, onloadstart = function () { }) {
@@ -392,7 +391,7 @@ class DropBoxController {
         }
     }
 
-    getFileView(file, key) {
+    getFileView(file, key){
 
         let li = document.createElement('li');
 
@@ -408,7 +407,9 @@ class DropBoxController {
 
     }
 
-    readFiles() {
+    readFiles(){
+
+        this.lastFolder = this.currentFolder.join('/');
 
         this.getFirebaseRef().on('value', snapshot => {
 
@@ -419,7 +420,13 @@ class DropBoxController {
                 let key = snapItem.key;
                 let data = snapItem.val();
 
-                this.listFilesEl.appendChild(this.getFileView(data, key));
+                if(data.type){
+
+                    this.listFilesEl.appendChild(this.getFileView(data, key));
+
+                }
+
+                
 
             })
 
@@ -428,7 +435,32 @@ class DropBoxController {
 
     }
 
+    openFolder(){
+
+        if(this.lastFolder) this.getFirebaseRef(this.lastFolder).off('value');
+        
+        this.readFiles();
+
+    }
+
     initEventsLi(li) {
+
+        li.addEventListener('dblclick', e=>{
+
+            let file = JSON.parse(li.dataset.file);
+
+            switch (file.type) {
+                case 'folder':
+                    this.currentFolder.push(file.name);
+                    this.openFolder();
+                    break;
+            
+                default:
+                    window.open('/file?path=' + file.path);
+                    
+            }
+
+        });
 
         li.addEventListener('click', event => {
 
